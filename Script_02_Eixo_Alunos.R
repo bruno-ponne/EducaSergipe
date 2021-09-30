@@ -8,13 +8,6 @@ library(readr)
 
 load("dados/SERGIPE_ALUNO.Rdata")
 
-# Adicionando o nome dos municípios:
-
-cod_mun_SE <- read_delim("dados/cod_mun_SE.csv", ";", escape_double = FALSE, trim_ws = TRUE)
-
-names(cod_mun_SE) <- c("ID_MUNICIPIO", "NO_MUNICIPIO")
-
-SERGIPE_ALUNO <- left_join(SERGIPE_ALUNO, cod_mun_SE, by = "ID_MUNICIPIO")
 
 # INDICADOR 1: FREQUÊNCIA DOS PAIS A REUNIÕES
 

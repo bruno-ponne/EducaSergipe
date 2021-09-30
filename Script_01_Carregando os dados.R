@@ -6,13 +6,21 @@
 # Arquivo 'TS_ALUNO_5EF.csv' referente aos alunos do 5º ano do Ensino Fundamental
 # Fonte: https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/microdados/saeb
 
-# 2) censo escolar 2020
-# Arquivo 
-
+# 2) Censo escolar 2020
+# Arquivo 'docentes_nordeste.csv' e 'escolas.csv'
+# Fonte: https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar/resultados
 
 #Bibliotecas necessárias:
-
 library(dplyr)
+library(readr)
+
+# Nomes dos municípios sergipanos
+
+cod_mun_SE <- read_delim("dados/cod_mun_SE.csv", ";", escape_double = FALSE, trim_ws = TRUE)
+
+names(cod_mun_SE) <- c("ID_MUNICIPIO", "NO_MUNICIPIO")
+cod_mun_SE$ID_MUNICIPIO <- as.numeric(cod_mun_SE$ID_MUNICIPIO)
+
 
 # SAEB
 
@@ -50,9 +58,42 @@ SERGIPE_ALUNO <- select(SERGIPE,
                   ID_DEPENDENCIA_ADM,
                   ID_UF)
 
-save(SERGIPE_ALUNO, file = "SERGIPE_ALUNO.Rdata")
+# Adicionando nomes dos municípios
+
+SERGIPE_ALUNO <- left_join(SERGIPE_ALUNO, cod_mun_SE, by = "ID_MUNICIPIO")
+
+
+save(SERGIPE_ALUNO, file = "dados/SERGIPE_ALUNO.Rdata")
 
 # CENSO ESCOLAR
+
+# Escola:
+
+ESCOLAS <- read.csv2("escolas.csv", sep = "|")
+
+# Filtrando apenas escolas municipais de Sergipe:
+
+ESCOLAS_SE <- filter(ESCOLAS, CO_UF == 28, TP_DEPENDENCIA == 3)
+
+names(cod_mun_SE) <- c("CO_MUNICIPIO", "NO_MUNICIPIO")
+ESCOLAS_SE <- left_join(ESCOLAS_SE, cod_mun_SE, by = "CO_MUNICIPIO")
+
+save(ESCOLAS_SE, file = "dados/ESCOLAS_SE.Rdata")
+
+# Professores NE:
+
+PROFESSORES <- read.csv2("docentes_nordeste.csv", sep = "|")
+
+PROF_SE <- PROFESSORES %>% 
+  filter(CO_UF == 28, TP_DEPENDENCIA == 3)
+
+PROF_SE <- left_join(PROF_SE, cod_mun_SE, by = "CO_MUNICIPIO")
+
+save(PROF_SE, file = "dados/PROF_SE.Rdata")
+
+
+
+
 
 
 
