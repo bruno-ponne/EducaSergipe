@@ -72,4 +72,32 @@ ggplot()+
   theme(axis.text = element_blank(),
         axis.ticks = element_blank())
 
+# Mapas de localização
+
+map_se <- read_sf("dados/mapa/28MUE250GC_SIR.shp")
+map_se$CD_GEOCODM <- as.numeric(map_se$CD_GEOCODM)
+map_se <- rename(map_se, ID_MUNICIPIO = CD_GEOCODM )
+
+cod_mun_SE <- read_delim("dados/cod_mun_SE.csv", ";", escape_double = FALSE, trim_ws = TRUE)
+names(cod_mun_SE) <- c("ID_MUNICIPIO", "NO_MUNICIPIO")
+cod_mun_SE$ID_MUNICIPIO <- as.numeric(cod_mun_SE$ID_MUNICIPIO)
+
+map_se <- left_join(map_se,cod_mun_SE, by= "ID_MUNICIPIO")
+
+for(element in map_se$NO_MUNICIPIO){
+  ggplot()+
+    geom_sf(data = map_se, aes(fill = NO_MUNICIPIO == element))+
+    scale_fill_manual(values = c("white", "#2c7fb8"))+
+    theme(panel.background = element_rect(fill = "white", colour = "gray"))+
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank())+
+    theme(legend.position = "none") 
+  nome <- paste("mapas_prontos/",as.character(element),".png", sep = "")
+  ggsave(nome)
+  
+  }
+
+
+
+
 

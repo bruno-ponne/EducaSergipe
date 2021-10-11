@@ -59,3 +59,35 @@ RESUMO_ESTUDO <- SERGIPE_ALUNO %>%
             Entre_1he2h = mean(TX_RESP_Q017D=="C")*100,
             Mais_de_2h = mean(TX_RESP_Q017D=="D")*100,
             Sem_Resposta = mean(TX_RESP_Q017D=="sem resposta")*100)
+
+
+# Nova versão:
+# exclui valores faltantes;
+# reduz o número de categorias de cada indicador;
+# cria o ranking
+
+freq(SERGIPE_ALUNO$TX_RESP_Q006E)
+
+SERGIPE_ALUNO$TX_RESP_Q006E[SERGIPE_ALUNO$TX_RESP_Q006E=="*"] <- NA
+SERGIPE_ALUNO$TX_RESP_Q006E[SERGIPE_ALUNO$TX_RESP_Q006E=="."] <- NA
+
+REUNIAO_DATA <- SERGIPE_ALUNO %>% 
+  select(NO_MUNICIPIO,TX_RESP_Q006E) %>% 
+  na.omit()
+
+
+
+# 25,63% de observações sem resposta para esse indicador
+freq(SERGIPE_ALUNO$TX_RESP_Q006E)
+
+REUNIOES_2 <- REUNIAO_DATA %>% 
+  group_by(NO_MUNICIPIO) %>% 
+  summarise(Nunca_QuaseNunca = mean(TX_RESP_Q006E=="A")*100,
+            De_vez_em_quando = mean(TX_RESP_Q006E=="B")*100,
+            Sempre_QuaseSempre = mean(TX_RESP_Q006E=="C")*100) %>% 
+  select(NO_MUNICIPIO, Nunca_QuaseNunca) %>% 
+  arrange(Nunca_QuaseNunca)
+
+REUNIOES_2$Ranking <- row.names(REUNIOES_2)
+REUNIOES_2$MediaSergipe <- mean(REUNIOES_2$Nunca_QuaseNunca)
+REUNIOES_2$DiferençaMédia <- REUNIOES_2$Nunca_QuaseNunca - REUNIOES_2$MediaSergipe
