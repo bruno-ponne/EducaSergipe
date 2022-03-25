@@ -9,70 +9,37 @@ library(sf)
 
 load("dados/SERGIPE_ALUNO.Rdata")
 load("dados/ESCOLAS_SE.Rdata")
-
-
-# Desempenho em Português
-
-DESEMP_PORT_M <- SERGIPE_ALUNO %>% 
-  group_by(ID_MUNICIPIO) %>%
-  summarise(media = mean(PROFICIENCIA_LP_SAEB, na.rm = TRUE))
+load("dados/RANKING.Rdata")
 
 # Carregando o mapa de Sergipe:
 
 map_se <- read_sf("dados/mapa/28MUE250GC_SIR.shp")
 
-# Desempenho + mapa
+map_se <- rename(map_se, CO_MUNICIPIO = CD_GEOCODM )
 
-map_se <- rename(map_se, ID_MUNICIPIO = CD_GEOCODM )
-
-map_se$ID_MUNICIPIO = as.numeric(map_se$ID_MUNICIPIO)
-
-MAP_DADOS <- left_join(map_se, DESEMP_PORT_M, by = "ID_MUNICIPIO")
-
-ggplot()+
-  geom_sf(data = MAP_DADOS, aes(geometry=geometry, fill = media), size=0.05, color="gray")+
-  scale_fill_gradient(name = "Nota em Portugês", low = '#f1eef6', high = '#034e7b')+
-  labs(title = "Desempenho no SAEB",
-       subtitle = "Português") +
-  theme(panel.background = element_rect(fill = "white", colour = "gray"))+
-  theme(axis.text = element_blank(),
-        axis.ticks = element_blank())
-
-# Bibliotecas
-
-freq(ESCOLAS_SE$IN_BIBLIOTECA) # 17,6% NA
-
-ESCOLAS_SE$IN_BIBLIOTECA[ESCOLAS_SE$IN_BIBLIOTECA==0] <- "não"
-ESCOLAS_SE$IN_BIBLIOTECA[ESCOLAS_SE$IN_BIBLIOTECA==1] <- "sim"
-
-RESUMO_BIBLIOTECAS <- ESCOLAS_SE %>% 
-  select(CO_MUNICIPIO, IN_BIBLIOTECA) %>% 
-  na.omit()%>% 
-  group_by(CO_MUNICIPIO)%>% 
-  summarise(Sim = mean(IN_BIBLIOTECA=="sim")*100,
-            Não = mean(IN_BIBLIOTECA=="não")*100) %>% 
-  arrange(desc(Sim))
-
-# Mapa + Bibliotecas
-
-map_se <- rename(map_se, CO_MUNICIPIO = ID_MUNICIPIO)
+map_se$CO_MUNICIPIO = as.numeric(map_se$CO_MUNICIPIO)
 
 
-MAP_BIB <- left_join(map_se, RESUMO_BIBLIOTECAS, by = "CO_MUNICIPIO")
 
-sem_bib <- MAP_BIB %>% filter(Sim==0)
+# Distribuição Espacial do IDEB - Figura 3
+
+map_ideb <- left_join(map_se, RANKING, by = "CO_MUNICIPIO")
+
+
 
 ggplot()+
-  geom_sf(data = MAP_DADOS, aes(geometry=geometry, fill = media), size=0.05, color="gray")+
-  scale_fill_gradient(name = "Nota em Portugês", low = '#f1eef6', high = '#034e7b')+
-  labs(title = "Desempenho no SAEB",
-       subtitle = "Em vermelho, municípios sem escola com biblioteca") +
-  geom_sf(data = sem_bib, aes(geometry=geometry), fill = "transparent", color="#99000d")+
-  theme(panel.background = element_rect(fill = "white", colour = "gray"))+
+  geom_sf(data = map_ideb, aes(geometry=geometry, fill = IDEB_VALIDO), color="black", size= 0.3)+
+  scale_fill_gradient(name = "Ideb", low ="#F8C301", high ="#29166F")+
+  theme(panel.background = element_rect(fill = "white", colour = "white"))+
   theme(axis.text = element_blank(),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank(),
+        panel.border = element_blank())
 
-# Mapas de localização
+ggsave(filename = "viz/map_se.png")
+
+
+
+# Mapas de localização - Mapas das páginas 29 a 103.
 
 map_se <- read_sf("dados/mapa/28MUE250GC_SIR.shp")
 map_se$CD_GEOCODM <- as.numeric(map_se$CD_GEOCODM)
@@ -85,17 +52,32 @@ cod_mun_SE$ID_MUNICIPIO <- as.numeric(cod_mun_SE$ID_MUNICIPIO)
 map_se <- left_join(map_se,cod_mun_SE, by= "ID_MUNICIPIO")
 
 for(element in map_se$NO_MUNICIPIO){
-  ggplot()+
-    geom_sf(data = map_se, aes(fill = NO_MUNICIPIO == element))+
-    scale_fill_manual(values = c("white", "#2c7fb8"))+
-    theme(panel.background = element_rect(fill = "white", colour = "gray"))+
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank())+
-    theme(legend.position = "none") 
-  nome <- paste("mapas_prontos/",as.character(element),".png", sep = "")
-  ggsave(nome)
-  
+  plot <- ggplot()+
+    geom_sf(data = map_se, aes(fill = NO_MUNICIPIO == element, color = NO_MUNICIPIO == element))+
+    scale_fill_manual(values = c("#F8C301", "#009B40"))+
+    scale_color_manual(values = c("#F8C301", "#009B40"))+
+    theme(
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      legend.position = "none",
+      panel.background = element_rect(fill = "transparent"), # bg of the panel
+      plot.background = element_rect(fill = "transparent", color = NA), # bg of the plot
+      legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+      legend.box.background = element_rect(fill = "transparent"), # get rid of legend panel bg
+      panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  nome <- paste("mapas_prontos/", element,".png", sep="")
+  ggsave(plot, filename = nome,  bg = "transparent", width = 7, height = 10, units = "cm")
   }
+
+
+
+# Carregando todos os indicadores 
+
+for(i in 1:10){
+  load(paste("dados/indicadores/IND0",as.character(i),".RData", sep=""))}
+
+load("dados/indicadores/IND10.RData")
+load("dados/RANKING.Rdata")
 
 
 

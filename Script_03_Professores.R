@@ -7,37 +7,53 @@ library(readr)
 
 load("dados/PROF_SE.RData")
 
-N_PROF_MUN <- PROF_SE %>% 
-  group_by(NO_MUNICIPIO) %>% 
-  summarise(n())
 
-# Complementação pedagógica
+# INDICADOR 3: Complementação pedagógica
 
 freq(PROF_SE$IN_COMPLEMENTACAO_PEDAGOGICA)
+
 # Não há valores faltantes
 
+COMP <- PROF_SE %>% 
+  select(NO_MUNICIPIO, CO_MUNICIPIO, IN_COMPLEMENTACAO_PEDAGOGICA, ID_DOCENTE) %>% 
+  group_by(ID_DOCENTE, NO_MUNICIPIO, CO_MUNICIPIO) %>% 
+  summarize(formacao = mean(IN_COMPLEMENTACAO_PEDAGOGICA))
 
-PROF_SE$IN_COMPLEMENTACAO_PEDAGOGICA[PROF_SE$IN_COMPLEMENTACAO_PEDAGOGICA==0] <- "não"
-PROF_SE$IN_COMPLEMENTACAO_PEDAGOGICA[PROF_SE$IN_COMPLEMENTACAO_PEDAGOGICA==1] <- "sim"
-
-RESUMO_COMP <- PROF_SE %>% 
-  group_by(NO_MUNICIPIO) %>% 
-  summarise(Sim = mean(IN_COMPLEMENTACAO_PEDAGOGICA=="sim")*100,
-            Não = mean(IN_COMPLEMENTACAO_PEDAGOGICA=="não")*100) %>% 
+IND03 <- COMP %>% 
+  group_by(NO_MUNICIPIO, CO_MUNICIPIO) %>% 
+  summarise(Sim = mean(formacao==1)*100,
+            Não = mean(formacao==0)*100)%>%
+  select(NO_MUNICIPIO, CO_MUNICIPIO, Sim) %>% 
   arrange(desc(Sim))
 
-# Curso de Pós Graduação (Especialização)
+save(IND03, file = "dados/indicadores/IND03.RData")
 
-PROF_SE$IN_ESPECIALIZACAO[PROF_SE$IN_ESPECIALIZACAO==0] <- "não"
-PROF_SE$IN_ESPECIALIZACAO[PROF_SE$IN_ESPECIALIZACAO==1] <- "sim"
+write_xlsx(IND03, path = "dados/ind_excel/IND03.xlsx")
+
+
+# Curso de Pós Graduação (Especialização)
 
 freq(PROF_SE$IN_ESPECIALIZACAO)
 # 10% de NA que serão eliminados da análise
 
-RESUMO_ESP <- PROF_SE %>% 
-  select(NO_MUNICIPIO, IN_ESPECIALIZACAO) %>% 
-  na.omit()%>% 
-  group_by(NO_MUNICIPIO)%>% 
-  summarise(Sim = mean(IN_ESPECIALIZACAO=="sim")*100,
-            Não = mean(IN_ESPECIALIZACAO=="não")*100) %>% 
+POS <- PROF_SE %>% 
+  select(NO_MUNICIPIO, CO_MUNICIPIO, IN_ESPECIALIZACAO, ID_DOCENTE) %>%
+  na.omit() %>% 
+  group_by(ID_DOCENTE, NO_MUNICIPIO, CO_MUNICIPIO) %>% 
+  summarize(formacao = mean(IN_ESPECIALIZACAO))
+
+freq(POS$formacao)
+
+IND04 <- POS %>% 
+  group_by(NO_MUNICIPIO, CO_MUNICIPIO) %>% 
+  summarise(Sim = mean(formacao==1)*100,
+            Não = mean(formacao==0)*100)%>%
+  select(NO_MUNICIPIO, CO_MUNICIPIO, Sim) %>% 
   arrange(desc(Sim))
+
+save(IND04, file = "dados/indicadores/IND04.RData")
+
+write_xlsx(IND04, path = "dados/ind_excel/IND04.xlsx")
+
+  
+  
